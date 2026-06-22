@@ -3,6 +3,7 @@
 #include <string>
 using namespace std;
 
+#include <unordered_map>
 #include <thread>
 #include <chrono>
 #include <algorithm>
@@ -48,30 +49,15 @@ void printWorld(char* world, int colSize, int rowSize) {
 
 void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
 
-    //renders the snake in the world according to the passed direction 
-    //essentially draws a directionally-consistent line between the snake's head and tail
-    // movement conditions: 
-    /*
-    I initially assumed the tail and head are the only moving parts
-
-    - each node must move towards the direction of the neighboring node.
-    - this per-node search is terminated when: node.coord == head.coord
-    */
-
-    //possible optimization: only the back 2 nodes need to move (along with the head) 
-
-    //possible optimization: only the back 2 nodes need to move (along with the head) 
-
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
     //converting 2d-index to 1-d index
     world[headInd] = '@';
 
     int nodeInd = tempSnake.tailX * colSize + tempSnake.tailY;
 
-    bool updateTail = false;
     while (nodeInd != headInd) { //snake will always start scroll towards the right 
-        nodeInd++; 
         world[nodeInd] = '@';
+        nodeInd++; 
     }
 }
 
@@ -105,6 +91,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
         break;
     }
 
+    unordered_map<int, bool> visitedNodes; 
     //possible optimization: only the back 2 nodes need to move (along with the head) 
 
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
@@ -121,19 +108,19 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
             world[nodeInd] = '.';
             updateTail = true; 
         }
-        if (world[nodeInd - colSize] == '@') {//up
+        if (world[nodeInd - colSize] == '@' && visitedNodes[nodeInd-colSize] != true) {//up
             nodeInd -= colSize;
             //cout << "going up nodeInd: "<<nodeInd<<endl;
         }
-        else if (world[nodeInd + colSize] == '@') {//down
+        else if (world[nodeInd + colSize] == '@' && visitedNodes[nodeInd + colSize] != true) {//down
             nodeInd += colSize;
             //cout << "going down nodeInd: " << nodeInd << endl;
         }
-        else if (world[nodeInd - 1] == '@') {//left
+        else if (world[nodeInd - 1] == '@' && visitedNodes[nodeInd - 1] != true) {//left
             nodeInd--;
             //cout << "going left nodeInd: " << nodeInd << endl;
         }
-        else if (world[nodeInd + 1] == '@') {//right
+        else if (world[nodeInd + 1] == '@' && visitedNodes[nodeInd + 1] != true) {//right
             nodeInd++;
             //cout << "going right nodeInd: " << nodeInd << endl;
         }
@@ -146,6 +133,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
             updateTail = false; 
         }
         world[nodeInd] = '@';
+        visitedNodes[nodeInd] = true;
     }
     //cout << "loop complete\n";
 }
@@ -164,7 +152,7 @@ int main() {
     }
 
     //SNAKE VARS 
-    int bodyLength = 2; 
+    int bodyLength = 4; 
 
     int headY = width/2; 
     int headX = height/2;
