@@ -5,8 +5,6 @@ using namespace std;
 
 #include <thread>
 #include <chrono>
-#include <iostream>
-#include <vector>
 #include <algorithm>
 #include <conio.h>
 
@@ -48,27 +46,108 @@ void printWorld(char* world, int colSize, int rowSize) {
     } 
 }
 
+void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
 
-void updateSnake(char*& world, Snake tempSnake, scroll direction, int rowSize, int colSize) { 
-    
     //renders the snake in the world according to the passed direction 
-    //essentially draws a directionally-consistent line between the snake's head and tail 
+    //essentially draws a directionally-consistent line between the snake's head and tail
+    // movement conditions: 
+    /*
+    I initially assumed the tail and head are the only moving parts
 
-    int temp; 
-    int count = tempSnake.bodyLength; 
-    bool dir = direction == scroll::LEFT || direction == scroll::RIGHT; 
-    
+    - each node must move towards the direction of the neighboring node.
+    - this per-node search is terminated when: node.coord == head.coord
+    */
+
+    //possible optimization: only the back 2 nodes need to move (along with the head) 
+
+    //possible optimization: only the back 2 nodes need to move (along with the head) 
+
+    int headInd = tempSnake.headX * colSize + tempSnake.headY;
     //converting 2d-index to 1-d index
-    world[tempSnake.headX * colSize + tempSnake.headY] = '@';
-    world[tempSnake.tailX * colSize + tempSnake.tailY] = '@';
+    world[headInd] = '@';
 
-    temp = tempSnake.headX * colSize + tempSnake.headY-1; 
-    
-    while (count > 0) {
-        world[temp] = '@'; 
-        temp -= dir ? 1 : colSize;  // conditionally traverses horizontally or vertically 
-        count--; 
+    int nodeInd = tempSnake.tailX * colSize + tempSnake.tailY;
+
+    bool updateTail = false;
+    while (nodeInd != headInd) { //snake will always start scroll towards the right 
+        nodeInd++; 
+        world[nodeInd] = '@';
     }
+}
+
+void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) {
+
+    //renders the snake in the world according to the passed direction 
+    //essentially draws a directionally-consistent line between the snake's head and tail
+    // movement conditions: 
+    /* 
+    I initially assumed the tail and head are the only moving parts 
+
+    - each node must move towards the direction of the neighboring node.
+    - this per-node search is terminated when: node.coord == head.coord
+    */
+
+    switch (direction)
+    {
+    case scroll::LEFT:
+        tempSnake.headY--;
+        break;
+    case scroll::RIGHT:
+        tempSnake.headY++;
+        break;
+    case scroll::UP:
+        tempSnake.headX--;
+        break;
+    case scroll::DOWN:
+        tempSnake.headX++;
+        break;
+    default:
+        break;
+    }
+
+    //possible optimization: only the back 2 nodes need to move (along with the head) 
+
+    int headInd = tempSnake.headX * colSize + tempSnake.headY;
+    //converting 2d-index to 1-d index
+    world[headInd] = '@';
+
+    int start = tempSnake.tailX * colSize + tempSnake.tailY;
+    int nodeInd = start; 
+
+    bool updateTail = false; 
+    while (nodeInd != headInd) {
+        //finding neighbours
+        if (nodeInd == start) {
+            world[nodeInd] = '.';
+            updateTail = true; 
+        }
+        if (world[nodeInd - colSize] == '@') {//up
+            nodeInd -= colSize;
+            //cout << "going up nodeInd: "<<nodeInd<<endl;
+        }
+        else if (world[nodeInd + colSize] == '@') {//down
+            nodeInd += colSize;
+            //cout << "going down nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd - 1] == '@') {//left
+            nodeInd--;
+            //cout << "going left nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd + 1] == '@') {//right
+            nodeInd++;
+            //cout << "going right nodeInd: " << nodeInd << endl;
+        }
+        if (updateTail) {
+            tempSnake.tailX = nodeInd / colSize;
+            tempSnake.tailY = nodeInd % colSize; 
+            //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
+            //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
+
+            updateTail = false; 
+        }
+        world[nodeInd] = '@';
+    }
+    //cout << "loop complete\n";
 }
 
 int main() {
@@ -76,11 +155,11 @@ int main() {
     const int width = 50; 
     const int height = 20; 
 
-    char* world[height][width];
+    char world[height][width];
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            *world[i][j] = '.';
+            world[i][j] = '.';
         }
     }
 
@@ -90,21 +169,28 @@ int main() {
     int headY = width/2; 
     int headX = height/2;
 
-    int tailY;
-    int tailX = headX-bodyLength; 
+    int tailY = headY-bodyLength;
+    int tailX = headX; 
+
+    scroll direction = scroll::RIGHT;
 
     Snake mainSnake(bodyLength, headX, headY, tailX, tailY); 
 
-    updateSnake(**world, mainSnake, scroll::RIGHT, height, width);
-    *world[headX][headY] = '@';
+    cout << "TAILX: " << mainSnake.tailX << endl;
+    cout << "TAILY: " << mainSnake.tailY << endl;
+    cout << "BODY LENGTH: " << mainSnake.bodyLength << endl;
 
-    printWorld((char*)world, width, height);
-    this_thread::sleep_for(chrono::seconds(2));
+    //this_thread::sleep_for(chrono::seconds(3));
 
-    scroll direction = scroll::RIGHT;
+    spawnSnake(*world, mainSnake, direction, width);
+    printWorld(*world, width, height);
+
+    //this_thread::sleep_for(chrono::seconds(2));
+
     auto prevTime = chrono::system_clock::now();
     while (true) {
 
+        //FPS CONTROL 
         this_thread::sleep_for(chrono::milliseconds(5));
 
         auto now = chrono::system_clock::now();
@@ -114,55 +200,37 @@ int main() {
 
         if (_kbhit()) {
             char userIn = _getch();
-            *world[tailX][tailY] = '.';
+            //world[mainSnake.tailX][mainSnake.tailY] = '.';
+            //refactoring to have updateSnake handle movement logic 
             if (userIn == 'w') { //up
-                headX--;
+                //mainSnake.headX--;
                 direction = scroll::UP;
             }
             else if (userIn == 's') { //down
-                headX++;
+                //mainSnake.headX++;
                 direction = scroll::DOWN;
             }
             else if (userIn == 'd') { //right
-                headY++;
+                //mainSnake.headY++;
                 direction = scroll::RIGHT;
             }
             else if (userIn == 'a') { //left
-                headY--;
+                //mainSnake.headY--;
                 direction = scroll::LEFT;
             }
             
-            //tail moves in the direction of main body. 
-            //assumption: main body doesn't update, only tail and head 
-
-            //if(world[tailX])
-            //*world[tailX][tailY] = '@'; 
-            //*world[headX][headY] = '@';
-
-            printWorld((char*)world, width, height);
+            updateWorld(*world, mainSnake, direction, width);
+            printWorld(*world, width, height);
             continue; 
         }
         //auto-scrolling for select direction
-        *world[headX][headY] = '.';
-        switch (direction)
-        {
-        case scroll::LEFT:
-            headY--;
-            break;
-        case scroll::RIGHT:
-            headY++;
-            break;
-        case scroll::UP:
-            headX--;
-            break;
-        case scroll::DOWN:
-            headX++;
-            break;
-        default:
-            break;
-        }
-        *world[headX][headY] = '@';
-        printWorld((char*)world, width, height);
+        //world[mainSnake.tailX][mainSnake.tailY] = '.'; //clearing snake trail
+        
+        //cout << "called scroll function: " << endl;
+        updateWorld(*world, mainSnake, direction, width);
+        //cout << "completed scroll function: " << endl;
+
+        printWorld(*world, width, height);
     }
     return 0;
 }
