@@ -143,13 +143,6 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
 
     //renders the snake in the world according to the passed direction 
     //essentially draws a directionally-consistent line between the snake's head and tail
-    // movement conditions: 
-    /*
-    I initially assumed the tail and head are the only moving parts
-
-    - each node must move towards the direction of the neighboring node.
-    - this per-node search is terminated when: node.coord == head.coord
-    */
 
     switch (direction)
     {
@@ -169,8 +162,6 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
         break;
     }
 
-    //possible optimization: only the back 2 nodes need to move (along with the head) 
-
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
     //converting 2d-index to 1-d index
     world[headInd] = '@';
@@ -181,22 +172,43 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
     //finding neighbours
     world[nodeInd] = '.';
 
-    if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-        nodeInd -= colSize;
-        //cout << "going up nodeInd: "<<nodeInd<<endl;
+    if(direction == scroll::RIGHT){ 
+        if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+            nodeInd += colSize;
+            //cout << "going down nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+            nodeInd--;
+            //cout << "going left nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+            nodeInd -= colSize;
+            //cout << "going up nodeInd: "<<nodeInd<<endl;
+        }
+        else if (world[nodeInd + 1] == '@' && nodeInd + 1  != headInd) {//right
+            nodeInd++;
+            //cout << "going right nodeInd: " << nodeInd << endl;
+        }
     }
-    else if (world[nodeInd + colSize] == '@' && nodeInd - colSize != headInd) {//down
-        nodeInd += colSize;
-        //cout << "going down nodeInd: " << nodeInd << endl;
+    else{
+        if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+            nodeInd -= colSize;
+            //cout << "going up nodeInd: "<<nodeInd<<endl;
+        }
+        else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
+            nodeInd++;
+            //cout << "going right nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+            nodeInd += colSize;
+            //cout << "going down nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+            nodeInd--;
+            //cout << "going left nodeInd: " << nodeInd << endl;
+        }
     }
-    else if (world[nodeInd - 1] == '@' && nodeInd - colSize != headInd) {//left
-        nodeInd--;
-        //cout << "going left nodeInd: " << nodeInd << endl;
-    }
-    else if (world[nodeInd + 1] == '@' && nodeInd - colSize != headInd) {//right
-        nodeInd++;
-        //cout << "going right nodeInd: " << nodeInd << endl;
-    }
+
 
     tempSnake.tailX = nodeInd / colSize;
     tempSnake.tailY = nodeInd % colSize;
@@ -232,16 +244,8 @@ int main() {
 
     Snake mainSnake(bodyLength, headX, headY, tailX, tailY); 
 
-    cout << "TAILX: " << mainSnake.tailX << endl;
-    cout << "TAILY: " << mainSnake.tailY << endl;
-    cout << "BODY LENGTH: " << mainSnake.bodyLength << endl;
-
-    //this_thread::sleep_for(chrono::seconds(3));
-
     spawnSnake(*world, mainSnake, direction, width);
     printWorld(*world, width, height);
-
-    //this_thread::sleep_for(chrono::seconds(2));
 
     auto prevTime = chrono::system_clock::now();
     while (true) {
@@ -252,6 +256,9 @@ int main() {
         auto now = chrono::system_clock::now();
         chrono::duration<float> elapsedTime = now - prevTime; 
         cout << "\033[" << 1 << ";" << 0 << "H" << " FPS: " << 1.0 / elapsedTime.count();
+
+        //TODO: package main() into a seperate function for optional restarting  
+
         prevTime = chrono::system_clock::now(); 
 
         if (_kbhit()) {
@@ -274,6 +281,7 @@ int main() {
                 //mainSnake.headY--;
                 direction = scroll::LEFT;
             }
+
             
             updateWorld(*world, mainSnake, direction, width);
             printWorld(*world, width, height);
