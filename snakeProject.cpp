@@ -9,6 +9,190 @@ using namespace std;
 #include <algorithm>
 #include <conio.h>
 
+std::unordered_map<char, std::string> bigLetters = {
+        {'A',
+         "  -  \n"
+         " / \\ \n"
+         "|---|\n"
+         "|   |\n"
+         "|   |\n"},
+
+        {'B',
+         "|--\\ \n"
+         "|  | \n"
+         "|--/ \n"
+         "|  | \n"
+         "|--/ \n"},
+
+        {'C',
+         " /-- \n"
+         "|    \n"
+         "|    \n"
+         "|    \n"
+         " \\-- \n"},
+
+        {'D',
+         "|--\\ \n"
+         "|   |\n"
+         "|   |\n"
+         "|   |\n"
+         "|--/ \n"},
+
+        {'E',
+         "|--- \n"
+         "|    \n"
+         "|--  \n"
+         "|    \n"
+         "|--- \n"},
+
+        {'F',
+         "|--- \n"
+         "|    \n"
+         "|--  \n"
+         "|    \n"
+         "|    \n"},
+
+        {'G',
+         " /-- \n"
+         "|    \n"
+         "| --\\\n"
+         "|   |\n"
+         " \\--/\n"},
+
+        {'H',
+         "|   |\n"
+         "|   |\n"
+         "|---|\n"
+         "|   |\n"
+         "|   |\n"},
+
+        {'I',
+         "-----\n"
+         "  |  \n"
+         "  |  \n"
+         "  |  \n"
+         "-----\n"},
+
+        {'J',
+         "  ---\n"
+         "    |\n"
+         "    |\n"
+         "|   |\n"
+         " \\--/\n"},
+
+        {'K',
+         "|  / \n"
+         "| /  \n"
+         "|/   \n"
+         "|\\   \n"
+         "| \\  \n"},
+
+        {'L',
+         "|    \n"
+         "|    \n"
+         "|    \n"
+         "|    \n"
+         "|----\n"},
+
+        {'M',
+         "|\\ /|\n"
+         "|/ \\|\n"
+         "|   |\n"
+         "|   |\n"
+         "|   |\n"},
+
+        {'N',
+         "|   |\n"
+         "|\\  |\n"
+         "| \\ |\n"
+         "|  \\|\n"
+         "|   |\n"},
+
+        {'O',
+         " /-\\ \n"
+         "|   |\n"
+         "|   |\n"
+         "|   |\n"
+         " \\-/ \n"},
+
+        {'P',
+         "|--\\ \n"
+         "|  | \n"
+         "|--/ \n"
+         "|    \n"
+         "|    \n"},
+
+        {'Q',
+         " /-\\ \n"
+         "|   |\n"
+         "|   |\n"
+         " \\-\\\n"
+         "    \\\n"},
+
+        {'R',
+         "|--\\ \n"
+         "|  | \n"
+         "|--/ \n"
+         "| \\  \n"
+         "|  \\ \n"},
+
+        {'S',
+         " /-- \n"
+         "|    \n"
+         " \\--\\\n"
+         "    |\n"
+         "\\--/ \n"},
+
+        {'T',
+         "-----\n"
+         "  |  \n"
+         "  |  \n"
+         "  |  \n"
+         "  |  \n"},
+
+        {'U',
+         "|   |\n"
+         "|   |\n"
+         "|   |\n"
+         "|   |\n"
+         " \\-/ \n"},
+
+        {'V',
+         "|   |\n"
+         "|   |\n"
+         " \\ / \n"
+         "  .  \n"
+         "     \n"},
+
+        {'W',
+         "|   |\n"
+         "|   |\n"
+         "| | |\n"
+         " \\|/ \n"
+         "  -  \n"},
+
+        {'X',
+         "\\   /\n"
+         " \\ / \n"
+         "  |  \n"
+         " / \\ \n"
+         "/   \\\n"},
+
+        {'Y',
+         "\\   /\n"
+         " \\ / \n"
+         "  |  \n"
+         "  |  \n"
+         "  |  \n"},
+
+        {'Z',
+         "-----\n"
+         "   / \n"
+         "  /  \n"
+         " /   \n"
+         "-----\n"}
+};
+
 enum class scroll {
     LEFT,
     RIGHT,
@@ -61,85 +245,28 @@ void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
     }
 }
 
-//void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) {
-//
-//    //renders the snake in the world according to the passed direction 
-//    //essentially draws a directionally-consistent line between the snake's head and tail
-//    // movement conditions: 
-//    /* 
-//    I initially assumed the tail and head are the only moving parts 
-//
-//    - each node must move towards the direction of the neighboring node.
-//    - this per-node search is terminated when: node.coord == head.coord
-//    */
-//
-//    switch (direction)
-//    {
-//    case scroll::LEFT:
-//        tempSnake.headY--;
-//        break;
-//    case scroll::RIGHT:
-//        tempSnake.headY++;
-//        break;
-//    case scroll::UP:
-//        tempSnake.headX--;
-//        break;
-//    case scroll::DOWN:
-//        tempSnake.headX++;
-//        break;
-//    default:
-//        break;
-//    }
-//
-//    unordered_map<int, bool> visitedNodes; 
-//    //possible optimization: only the back 2 nodes need to move (along with the head) 
-//
-//    int headInd = tempSnake.headX * colSize + tempSnake.headY;
-//    //converting 2d-index to 1-d index
-//    world[headInd] = '@';
-//
-//    int start = tempSnake.tailX * colSize + tempSnake.tailY;
-//    int nodeInd = start; 
-//
-//    bool updateTail = false; 
-//    while (nodeInd != headInd) {
-//        //finding neighbours
-//        if (nodeInd == start) {
-//            world[nodeInd] = '.';
-//            updateTail = true; 
-//        }
-//        if (world[nodeInd - colSize] == '@' && visitedNodes[nodeInd-colSize] != true) {//up
-//            nodeInd -= colSize;
-//            //cout << "going up nodeInd: "<<nodeInd<<endl;
-//        }
-//        else if (world[nodeInd + colSize] == '@' && visitedNodes[nodeInd + colSize] != true) {//down
-//            nodeInd += colSize;
-//            //cout << "going down nodeInd: " << nodeInd << endl;
-//        }
-//        else if (world[nodeInd - 1] == '@' && visitedNodes[nodeInd - 1] != true) {//left
-//            nodeInd--;
-//            //cout << "going left nodeInd: " << nodeInd << endl;
-//        }
-//        else if (world[nodeInd + 1] == '@' && visitedNodes[nodeInd + 1] != true) {//right
-//            nodeInd++;
-//            //cout << "going right nodeInd: " << nodeInd << endl;
-//        }
-//        if (updateTail) {
-//            tempSnake.tailX = nodeInd / colSize;
-//            tempSnake.tailY = nodeInd % colSize; 
-//            //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
-//            //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
-//
-//            updateTail = false; 
-//        }
-//        world[nodeInd] = '@';
-//        visitedNodes[nodeInd] = true;
-//    }
-//    //cout << "loop complete\n";
-//}
+void gameover(int rowSize){
+    //clearing screen
+    for (int i = 0; i < rowSize+5; i++) {
+        cout << "\033["<<i<<";0H" << string(50, ' ') << endl;
+        this_thread::sleep_for(chrono::milliseconds(20));
+    }
+    string msg = "gameover";
 
+    for (int i = 0; i < msg.size(); i++) {
+        string target = bigLetters[toupper(msg[i])];
+        //printing each row of bigLetters[msg[i]]
 
-void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) {
+        for (int x = 0; x < target.size(); x+=6)  // magic number 5 is the column size of bigLetter[msg[i]]
+            cout << "\033[" << (int)x/6 + 1 << ";" << i * 6 << "H" << target.substr(x,5);
+
+    }
+
+    this_thread::sleep_for(chrono::seconds(30));
+    exit(1);
+}
+
+void updateWorld(char* world, Snake& tempSnake, scroll& direction, const int rowSize, const int colSize) {
 
     //renders the snake in the world according to the passed direction 
     //essentially draws a directionally-consistent line between the snake's head and tail
@@ -164,6 +291,11 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, int colSize) 
     }
 
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
+    if (world[headInd] == '@') {
+        gameover(rowSize);
+        return; 
+    }
+
     //converting 2d-index to 1-d index
     world[headInd] = '@';
 
@@ -267,40 +399,26 @@ int main() {
 
         if (_kbhit()) {
             char userIn = _getch();
-            //world[mainSnake.tailX][mainSnake.tailY] = '.';
             //refactoring to have updateSnake handle movement logic 
-            if (userIn == 'w') { //up
-                //mainSnake.headX--;
+            if (userIn == 'w' && direction != scroll::DOWN)
                 direction = scroll::UP;
-            }
-            else if (userIn == 's') { //down
-                //mainSnake.headX++;
+            else if (userIn == 's' && direction != scroll::UP)
                 direction = scroll::DOWN;
-            }
-            else if (userIn == 'd') { //right
-                //mainSnake.headY++;
+            else if (userIn == 'd' && direction != scroll::LEFT)
                 direction = scroll::RIGHT;
-            }
-            else if (userIn == 'a') { //left
-                //mainSnake.headY--;
+            else if (userIn == 'a' && direction != scroll::RIGHT)
                 direction = scroll::LEFT;
-            }
 
             cout << "\033[" << height+2 << ";" << 0 << "H" << " KEY PRESSED: ";
             cout << "\033[" << height+2 << ";" << debugIndex+17 << "H" << userIn;
             debugIndex = (debugIndex + 1) % 5;
 
-            updateWorld(*world, mainSnake, direction, width);
+            updateWorld(*world, mainSnake, direction, height, width);
             printWorld(*world, width, height);
             continue; 
         }
         //auto-scrolling for select direction
-        //world[mainSnake.tailX][mainSnake.tailY] = '.'; //clearing snake trail
-        
-        //cout << "called scroll function: " << endl;
-        updateWorld(*world, mainSnake, direction, width);
-        //cout << "completed scroll function: " << endl;
-
+        updateWorld(*world, mainSnake, direction, height, width);
         printWorld(*world, width, height);
     }
     return 0;
