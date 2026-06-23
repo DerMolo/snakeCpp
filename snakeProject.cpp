@@ -305,7 +305,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, const int row
     //finding neighbours
     world[nodeInd] = '.';
 
-    if (direction == scroll::RIGHT) { //counter clock wise 
+    if (direction == scroll::RIGHT) { //ccw 
         if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
             nodeInd--;
             //cout << "going left nodeInd: " << nodeInd << endl;
@@ -323,7 +323,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, const int row
             //cout << "going up nodeInd: "<<nodeInd<<endl;
         }
     }
-    else { //clock wise 
+    else if(direction == scroll::LEFT){ //ccw
         if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
             nodeInd++;
             //cout << "going right nodeInd: " << nodeInd << endl;
@@ -341,7 +341,24 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, const int row
             //cout << "going down nodeInd: " << nodeInd << endl;
         }
     }
-
+    else{
+        if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+            nodeInd -= colSize;
+            //cout << "going up nodeInd: "<<nodeInd<<endl;
+        }
+        else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+            nodeInd--;
+            //cout << "going left nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+            nodeInd += colSize;
+            //cout << "going down nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
+            nodeInd++;
+            //cout << "going right nodeInd: " << nodeInd << endl;
+        }
+    }
 
     tempSnake.tailX = nodeInd / colSize;
     tempSnake.tailY = nodeInd % colSize;
