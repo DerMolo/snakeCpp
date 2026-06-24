@@ -305,12 +305,12 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
                 break;
             }
         }
-        cout << "\033[10;28H" << " countdown: " << count;
+        cout << "\033[10;28H" << ": " << count;
         count--;
         this_thread::sleep_for(chrono::seconds(1));
     }
-    cout << "\033[11;0H" << "FINAL SCORE: " << tempSnake.bodyLength << endl;
-    return; 
+    if (!restart)
+        exit(1);
 }
 
 void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
@@ -341,7 +341,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         gameover(tempSnake, rowSize, colSize);
         return; 
     }
-    
+
     //trigerring tail growth 
     bool growSnake = false;
     if (world[headInd] == '+') {
@@ -360,10 +360,10 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         world[nodeInd] = '.';
 
         //this fuckery will do
-        //trailing tail according to neighbours and head's direction 
+        //trailing tail according to neighbour's presence and head's direction 
 
         //bad approach; causes game-breaking glitch 
-        if (direction == scroll::RIGHT) { //ccw 
+        if (direction == scroll::RIGHT) {  
             if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
                 nodeInd--;
                 //cout << "going left nodeInd: " << nodeInd << endl;
@@ -381,7 +381,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
                 //cout << "going up nodeInd: "<<nodeInd<<endl;
             }
         }
-        else if (direction == scroll::LEFT) { //ccw
+        else if (direction == scroll::LEFT) { 
             if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
                 nodeInd++;
                 //cout << "going right nodeInd: " << nodeInd << endl;
@@ -399,7 +399,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
                 //cout << "going down nodeInd: " << nodeInd << endl;
             }
         }
-        else { //ccw
+        else { 
             if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
                 nodeInd -= colSize;
                 //cout << "going up nodeInd: "<<nodeInd<<endl;
@@ -430,10 +430,12 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
 
 int main() {
     do{
+        if (restart) {
+            restart = false;
+            cout << "\033[0;0H" << string(100, ' ');
+        }
         const int width = 50;
         const int height = 20;
-
-        clearScreen(width, height);
 
         char world[height][width];
 
@@ -468,7 +470,6 @@ int main() {
         auto prevTime = chrono::system_clock::now();
 
         while (!restart) {
-
             //FPS CONTROL 
             this_thread::sleep_for(chrono::milliseconds(5));
 
@@ -477,14 +478,13 @@ int main() {
 
             cout << "\033[" << 1 << ";" << 0 << "H" << " FPS: " << 1.0 / elapsedTime.count();
             prevTime = chrono::system_clock::now();
-            //TODO: package game into a loop for optional restarting  
 
             //spawning apple
             if (!manzana->exists) {
                 do {
                     srand(time(NULL));
-                    manzana->appX = (rand() % height - 1) + 2;
-                    manzana->appY = (rand() % width - 1) + 2;
+                    manzana->appX = (rand() % height - 2) + 2;
+                    manzana->appY = (rand() % width - 2) + 2;
                 } while (world[manzana->appX][manzana->appY] == '@' || world[manzana->appX][manzana->appY] == '#');
                 manzana->exists = true;
                 world[manzana->appX][manzana->appY] = '+';
@@ -492,7 +492,7 @@ int main() {
 
             if (_kbhit()) {
                 char userIn = _getch();
-                //refactoring to have updateSnake handle movement logic 
+
                 if (userIn == 'w' && direction != scroll::DOWN)
                     direction = scroll::UP;
                 else if (userIn == 's' && direction != scroll::UP)
