@@ -267,12 +267,18 @@ void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
     }
 }
 
-void bigPrint(string msg, int rowSize, int colSize) {
+void clearScreen(int rowSize, int colSize) {
     //clearing screen
     for (int i = 0; i < rowSize + 5; i++) {
         cout << "\033[" << i << ";0H" << string(colSize, ' ') << endl;
         this_thread::sleep_for(chrono::milliseconds(20));
     }
+}
+
+void bigPrint(string msg, int rowSize, int colSize) {
+
+    clearScreen(rowSize, colSize);
+
     for (int i = 0; i < msg.size(); i++) {
         string target = bigLetters[toupper(msg[i])];
         //printing each row of bigLetters[msg[i]]
@@ -282,10 +288,29 @@ void bigPrint(string msg, int rowSize, int colSize) {
     }
 }
 
-void gameover(int rowSize, int colSize){
+bool restart = false; 
+
+void gameover(Snake& tempSnake, int rowSize, int colSize){
     bigPrint("gameover", rowSize, colSize);
-    this_thread::sleep_for(chrono::seconds(30));
-    exit(1);
+    this_thread::sleep_for(chrono::seconds(1)); 
+    cout << "\033[10;0H" << "\t press 'R' to try again ";
+    cout << "\033[11;0H" << "\t FINAL SCORE: " << tempSnake.bodyLength << endl;
+    int count = 5; 
+    char userIn = ' ';
+    while(count>0 && userIn != 'r') {
+        if (_kbhit()) {
+            userIn = _getch();
+            if (userIn == 'r') {
+                restart = true;
+                break;
+            }
+        }
+        cout << "\033[10;28H" << " countdown: " << count;
+        count--;
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+    cout << "\033[11;0H" << "FINAL SCORE: " << tempSnake.bodyLength << endl;
+    return; 
 }
 
 void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
@@ -313,7 +338,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
 
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
     if (world[headInd] == '@' || world[headInd] == '#') {
-        gameover(rowSize, colSize);
+        gameover(tempSnake, rowSize, colSize);
         return; 
     }
     
@@ -404,94 +429,96 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
 
 
 int main() {
-    const int width = 50; 
-    const int height = 20; 
+    do{
+        const int width = 50;
+        const int height = 20;
 
-    char world[height][width];
+        clearScreen(width, height);
 
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (j == 0 || i == 0 || i == height-1|| j == width-1)
-                world[i][j] = '#';
-            else 
-                world[i][j] = '.';
-        }
-    }
+        char world[height][width];
 
-    //SNAKE VARS 
-    int bodyLength = 0; 
-
-    int headY = width/2; 
-    int headX = height/2;
-
-    int tailY = headY-bodyLength;
-    int tailX = headX; 
-
-    scroll direction = scroll::RIGHT;
-
-    Snake mainSnake(bodyLength, headX, headY, tailX, tailY); 
-    Apple* manzana = new Apple();
-
-    spawnSnake(*world, mainSnake, direction, width);
-    printWorld(*world, width, height);
-
-    int keyPressed_debugIndex = 0;
-
-    auto prevTime = chrono::system_clock::now();
-
-    while (true) {
-
-        //FPS CONTROL 
-        this_thread::sleep_for(chrono::milliseconds(20));
-
-        auto now = chrono::system_clock::now();
-        chrono::duration<float> elapsedTime = now - prevTime; 
-
-        cout << "\033[" << 1 << ";" << 0 << "H" << " FPS: " << 1.0 / elapsedTime.count();
-        prevTime = chrono::system_clock::now();
-        //TODO: package game into a loop for optional restarting  
-
-        //spawning apple
-        if(!manzana->exists){
-            do{
-                srand(time(NULL));
-                manzana->appX = (rand() % height - 1) + 2;
-                manzana->appY = (rand() % width-1) + 2;
-            } while (world[manzana->appX][manzana->appY] == '@' || world[manzana->appX][manzana->appY] == '#');
-            manzana->exists = true;
-            world[manzana->appX][manzana->appY] = '+';
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (j == 0 || i == 0 || i == height - 1 || j == width - 1)
+                    world[i][j] = '#';
+                else
+                    world[i][j] = '.';
+            }
         }
 
-        if (_kbhit()) {
-            char userIn = _getch();
-            //refactoring to have updateSnake handle movement logic 
-            if (userIn == 'w' && direction != scroll::DOWN)
-                direction = scroll::UP;
-            else if (userIn == 's' && direction != scroll::UP)
-                direction = scroll::DOWN;
-            else if (userIn == 'd' && direction != scroll::LEFT)
-                direction = scroll::RIGHT;
-            else if (userIn == 'a' && direction != scroll::RIGHT)
-                direction = scroll::LEFT;
+        //SNAKE VARS 
+        int bodyLength = 0;
 
-            //debugging 
-            cout << "\033[" << height+2 << ";" << 0 << "H" << " KEY PRESSED: ";
-            cout << "\033[" << height+2 << ";" << keyPressed_debugIndex+17 << "H" << userIn;
-            keyPressed_debugIndex = (keyPressed_debugIndex + 1) % 5;
+        int headY = width / 2;
+        int headX = height / 2;
 
-            cout << "\033[" << height + 3 << ";" << 0 << "H" << " APPLE DATA: "<<manzana->appX<<", "<<manzana->appY<< " EXISTS? "<<manzana->exists;
+        int tailY = headY - bodyLength;
+        int tailX = headX;
 
-            cout << "\033[" << height + 4 << ";" << 0 << "H" << " SCORE: "<<mainSnake.bodyLength;
+        scroll direction = scroll::RIGHT;
 
+        Snake mainSnake(bodyLength, headX, headY, tailX, tailY);
+        Apple* manzana = new Apple();
 
+        spawnSnake(*world, mainSnake, direction, width);
+        printWorld(*world, width, height);
 
+        int keyPressed_debugIndex = 0;
+
+        auto prevTime = chrono::system_clock::now();
+
+        while (!restart) {
+
+            //FPS CONTROL 
+            this_thread::sleep_for(chrono::milliseconds(5));
+
+            auto now = chrono::system_clock::now();
+            chrono::duration<float> elapsedTime = now - prevTime;
+
+            cout << "\033[" << 1 << ";" << 0 << "H" << " FPS: " << 1.0 / elapsedTime.count();
+            prevTime = chrono::system_clock::now();
+            //TODO: package game into a loop for optional restarting  
+
+            //spawning apple
+            if (!manzana->exists) {
+                do {
+                    srand(time(NULL));
+                    manzana->appX = (rand() % height - 1) + 2;
+                    manzana->appY = (rand() % width - 1) + 2;
+                } while (world[manzana->appX][manzana->appY] == '@' || world[manzana->appX][manzana->appY] == '#');
+                manzana->exists = true;
+                world[manzana->appX][manzana->appY] = '+';
+            }
+
+            if (_kbhit()) {
+                char userIn = _getch();
+                //refactoring to have updateSnake handle movement logic 
+                if (userIn == 'w' && direction != scroll::DOWN)
+                    direction = scroll::UP;
+                else if (userIn == 's' && direction != scroll::UP)
+                    direction = scroll::DOWN;
+                else if (userIn == 'd' && direction != scroll::LEFT)
+                    direction = scroll::RIGHT;
+                else if (userIn == 'a' && direction != scroll::RIGHT)
+                    direction = scroll::LEFT;
+
+                //debugging 
+                cout << "\033[" << height + 2 << ";" << 0 << "H" << " KEY PRESSED: ";
+                cout << "\033[" << height + 2 << ";" << keyPressed_debugIndex + 17 << "H" << userIn;
+                keyPressed_debugIndex = (keyPressed_debugIndex + 1) % 5;
+
+                cout << "\033[" << height + 3 << ";" << 0 << "H" << " APPLE DATA: " << manzana->appX << ", " << manzana->appY << " EXISTS? " << manzana->exists;
+
+                cout << "\033[" << height + 4 << ";" << 0 << "H" << " SCORE: " << mainSnake.bodyLength;
+
+                updateWorld(*world, mainSnake, direction, manzana, height, width);
+                printWorld(*world, width, height);
+                continue;
+            }
+            //auto-scrolling for select direction
             updateWorld(*world, mainSnake, direction, manzana, height, width);
             printWorld(*world, width, height);
-            continue; 
         }
-        //auto-scrolling for select direction
-        updateWorld(*world, mainSnake, direction, manzana, height, width);
-        printWorld(*world, width, height);
-    }
+    } while (restart);
     return 0;
 }
