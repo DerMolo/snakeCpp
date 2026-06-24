@@ -305,7 +305,7 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
                 break;
             }
         }
-        cout << "\033[10;28H" << ": " << count;
+        cout << "\033[10;28H" << ": " << count-1;
         count--;
         this_thread::sleep_for(chrono::seconds(1));
     }
