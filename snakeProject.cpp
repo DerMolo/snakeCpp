@@ -257,12 +257,14 @@ void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
 
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
     //converting 2d-index to 1-d index
-    world[headInd] = '@';
+    //world[headInd] = '@';
+    world[headInd] = 'R';
 
     int nodeInd = tempSnake.tailX * colSize + tempSnake.tailY;
 
     while (nodeInd != headInd) { //snake will always start scrolling towards the right 
-        world[nodeInd] = '@';
+        //world[headInd] = '@';
+        world[nodeInd] = 'R';
         nodeInd++; 
     }
 }
@@ -305,7 +307,7 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
                 break;
             }
         }
-        cout << "\033[10;28H" << ": " << count-1;
+        cout << "\033[10;32H" << ": " << count-1;
         count--;
         this_thread::sleep_for(chrono::seconds(1));
     }
@@ -313,23 +315,147 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
         exit(1);
 }
 
+
+//void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
+//
+//    //renders the snake in the world according to the passed direction 
+//    //essentially draws a directionally-consistent line between the snake's head and tail
+//
+//    switch (direction)
+//    {
+//    case scroll::LEFT:
+//        tempSnake.headY--;
+//        break;
+//    case scroll::RIGHT:
+//        tempSnake.headY++;
+//        break;
+//    case scroll::UP:
+//        tempSnake.headX--;
+//        break;
+//    case scroll::DOWN:
+//        tempSnake.headX++;
+//        break;
+//    default:
+//        break;
+//    }
+//
+//    int headInd = tempSnake.headX * colSize + tempSnake.headY;
+//
+//    if (world[headInd] == '@' || world[headInd] == '#') {
+//        gameover(tempSnake, rowSize, colSize);
+//        return; 
+//    }
+//
+//    //trigerring tail growth 
+//    bool growSnake = false;
+//    if (world[headInd] == '+') {
+//        tempSnake.bodyLength++;
+//        appTemp->exists = false; 
+//        growSnake = true;
+//    }
+//
+//    //converting 2d-index to 1-d index
+//    world[headInd] = '@';
+//
+//    if (!growSnake) {
+//        int start = tempSnake.tailX * colSize + tempSnake.tailY;
+//        int nodeInd = start;
+//
+//        world[nodeInd] = '.';
+//
+//        //this fuckery will do
+//        //trailing tail according to neighbour's presence and head's direction 
+//
+//        //bad approach; causes game-breaking glitch 
+//        if (direction == scroll::RIGHT) {  
+//            if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+//                nodeInd--;
+//                //cout << "going left nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+//                nodeInd += colSize;
+//                //cout << "going down nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
+//                nodeInd++;
+//                //cout << "going right nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+//                nodeInd -= colSize;
+//                //cout << "going up nodeInd: "<<nodeInd<<endl;
+//            }
+//        }
+//        else if (direction == scroll::LEFT) { 
+//            if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
+//                nodeInd++;
+//                //cout << "going right nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+//                nodeInd -= colSize;
+//                //cout << "going up nodeInd: "<<nodeInd<<endl;
+//            }
+//            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+//                nodeInd--;
+//                //cout << "going left nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+//                nodeInd += colSize;
+//                //cout << "going down nodeInd: " << nodeInd << endl;
+//            }
+//        }
+//        else { 
+//            if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
+//                nodeInd -= colSize;
+//                //cout << "going up nodeInd: "<<nodeInd<<endl;
+//            }
+//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
+//                nodeInd += colSize;
+//                //cout << "going down nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
+//                nodeInd--;
+//                //cout << "going left nodeInd: " << nodeInd << endl;
+//            }
+//            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
+//                nodeInd++;
+//                //cout << "going right nodeInd: " << nodeInd << endl;
+//            }
+//        }
+//
+//        tempSnake.tailX = nodeInd / colSize;
+//        tempSnake.tailY = nodeInd % colSize;
+//        //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
+//        //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
+//
+//        world[nodeInd] = '@';
+//    }
+//}
+
+
 void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
 
     //renders the snake in the world according to the passed direction 
     //essentially draws a directionally-consistent line between the snake's head and tail
 
+    char headBody = '@';
+    char tailBody = '@';
+
     switch (direction)
     {
     case scroll::LEFT:
+        headBody = 'L';
         tempSnake.headY--;
         break;
     case scroll::RIGHT:
+        headBody = 'R';
         tempSnake.headY++;
         break;
     case scroll::UP:
+        headBody = 'U';
         tempSnake.headX--;
         break;
     case scroll::DOWN:
+        headBody = 'D';
         tempSnake.headX++;
         break;
     default:
@@ -337,21 +463,24 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
     }
 
     int headInd = tempSnake.headX * colSize + tempSnake.headY;
-    if (world[headInd] == '@' || world[headInd] == '#') {
+    bool isSnakeBody = world[headInd] == 'L' || world[headInd] == 'R' || world[headInd] == 'U' || world[headInd] == 'D';
+
+    if (isSnakeBody || world[headInd] == '#') {
         gameover(tempSnake, rowSize, colSize);
-        return; 
+        return;
     }
 
     //trigerring tail growth 
     bool growSnake = false;
     if (world[headInd] == '+') {
         tempSnake.bodyLength++;
-        appTemp->exists = false; 
+        appTemp->exists = false;
         growSnake = true;
     }
 
     //converting 2d-index to 1-d index
-    world[headInd] = '@';
+    //world[headInd] = '@';
+    world[headInd] = headBody;
 
     if (!growSnake) {
         int start = tempSnake.tailX * colSize + tempSnake.tailY;
@@ -363,59 +492,25 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         //trailing tail according to neighbour's presence and head's direction 
 
         //bad approach; causes game-breaking glitch 
-        if (direction == scroll::RIGHT) {  
-            if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-                nodeInd--;
-                //cout << "going left nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-                nodeInd += colSize;
-                //cout << "going down nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-                nodeInd++;
-                //cout << "going right nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-                nodeInd -= colSize;
-                //cout << "going up nodeInd: "<<nodeInd<<endl;
-            }
+        if (world[nodeInd - 1] == 'L' && nodeInd - 1 != headInd) {//left
+            tailBody = 'L';
+            nodeInd--;
+            //cout << "going left nodeInd: " << nodeInd << endl;
         }
-        else if (direction == scroll::LEFT) { 
-            if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-                nodeInd++;
-                //cout << "going right nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-                nodeInd -= colSize;
-                //cout << "going up nodeInd: "<<nodeInd<<endl;
-            }
-            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-                nodeInd--;
-                //cout << "going left nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-                nodeInd += colSize;
-                //cout << "going down nodeInd: " << nodeInd << endl;
-            }
+        else if (world[nodeInd + colSize] == 'D' && nodeInd + colSize != headInd) {//down
+            tailBody = 'D';
+            nodeInd += colSize;
+            //cout << "going down nodeInd: " << nodeInd << endl;
         }
-        else { 
-            if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-                nodeInd -= colSize;
-                //cout << "going up nodeInd: "<<nodeInd<<endl;
-            }
-            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-                nodeInd += colSize;
-                //cout << "going down nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-                nodeInd--;
-                //cout << "going left nodeInd: " << nodeInd << endl;
-            }
-            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-                nodeInd++;
-                //cout << "going right nodeInd: " << nodeInd << endl;
-            }
+        else if (world[nodeInd + 1] == 'R' && nodeInd + 1 != headInd) {//right
+            tailBody = 'R';
+            nodeInd++;
+            //cout << "going right nodeInd: " << nodeInd << endl;
+        }
+        else if (world[nodeInd - colSize] == 'U' && nodeInd - colSize != headInd) {//up
+            tailBody = 'U';
+            nodeInd -= colSize;
+            //cout << "going up nodeInd: "<<nodeInd<<endl;
         }
 
         tempSnake.tailX = nodeInd / colSize;
@@ -423,7 +518,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
         //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
 
-        world[nodeInd] = '@';
+        world[nodeInd] = tailBody;
     }
 }
 
@@ -485,7 +580,7 @@ int main() {
                     srand(time(NULL));
                     manzana->appX = (rand() % height - 2) + 2;
                     manzana->appY = (rand() % width - 2) + 2;
-                } while (world[manzana->appX][manzana->appY] == '@' || world[manzana->appX][manzana->appY] == '#');
+                } while (world[manzana->appX][manzana->appY] == 'L' || world[manzana->appX][manzana->appY] == 'R' || world[manzana->appX][manzana->appY] == 'U' || world[manzana->appX][manzana->appY] == 'D' || world[manzana->appX][manzana->appY] == '#');
                 manzana->exists = true;
                 world[manzana->appX][manzana->appY] = '+';
             }
