@@ -281,7 +281,7 @@ void printWorld(char* world, Snake snakeTemp, Apple appTemp, int colSize, int ro
     cout << "\033[" << rowSize + 7 << ";" << 0 << "H" << "Head Coord: " << snakeTemp.headX << ", " << snakeTemp.headY<<"  ";
 
 
-    if(appTemp.exists)
+    if(appTemp.exists || world[appTemp.appX * colSize + appTemp.appY] != '#')
         cout << "\033[" << appTemp.appX + 2 << ";" << appTemp.appY << "H" << '+';
 }
 
@@ -347,7 +347,7 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
         exit(1);
 }
 
-void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
+void updateWorld(char* world, Snake& snakeTemp, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
 
     //renders the snake in the world according to the passed direction 
     //essentially draws a directionally-consistent line between the snake's head and tail
@@ -359,37 +359,38 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
     {
     case scroll::LEFT:
         headBody = 'L';
-        tempSnake.headY--;
+        snakeTemp.headY--;
         break;
     case scroll::RIGHT:
         headBody = 'R';
-        tempSnake.headY++;
+        snakeTemp.headY++;
         break;
     case scroll::UP:
         headBody = 'U';
-        tempSnake.headX--;
+        snakeTemp.headX--;
         break;
     case scroll::DOWN:
         headBody = 'D';
-        tempSnake.headX++;
+        snakeTemp.headX++;
         break;
     default:
         break;
     }
 
-    int headInd = tempSnake.headX * colSize + tempSnake.headY;
+    int headInd = snakeTemp.headX * colSize + snakeTemp.headY;
     bool isSnakeBody = world[headInd] == 'L' || world[headInd] == 'R' || world[headInd] == 'U' || world[headInd] == 'D';
 
     if (isSnakeBody || world[headInd] == '#') {
-        printWorld(world, tempSnake, *appTemp, colSize, rowSize);
-        gameover(tempSnake, rowSize, colSize);
+        printWorld(world, snakeTemp, *appTemp, colSize, rowSize);
+        gameover(snakeTemp, rowSize, colSize);
         return;
     }
 
     //trigerring tail growth 
     bool growSnake = false;
     if (world[headInd] == '+') {
-        tempSnake.bodyLength++;
+        cout << "\033[" << appTemp->appX + 2 << ";" << appTemp->appY << "H" << "\033[31m" << headBody << "\033[0m";
+        snakeTemp.bodyLength++;
         appTemp->exists = false;
         growSnake = true;
     }
@@ -399,12 +400,12 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
     world[headInd] = headBody;
 
     if (!growSnake) {
-        int start = tempSnake.tailX * colSize + tempSnake.tailY;
+        int start = snakeTemp.tailX * colSize + snakeTemp.tailY;
         int nodeInd = start;
 
         world[nodeInd] = '.';
-        tempSnake.prevX = nodeInd/colSize;
-        tempSnake.prevY = nodeInd % colSize;
+        snakeTemp.prevX = nodeInd/colSize;
+        snakeTemp.prevY = nodeInd % colSize;
 
         //this fuckery will do
         //trailing tail according to neighbour's presence and head's direction 
@@ -431,8 +432,8 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
             //cout << "going up nodeInd: "<<nodeInd<<endl;
         }
 
-        tempSnake.tailX = nodeInd / colSize;
-        tempSnake.tailY = nodeInd % colSize;
+        snakeTemp.tailX = nodeInd / colSize;
+        snakeTemp.tailY = nodeInd % colSize;
         //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
         //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
 
