@@ -261,28 +261,15 @@ void printWorld(char* world, int colSize, int rowSize) {
     } 
 }
 
-void printWorld(char* world, Snake snakeTemp, Apple appTemp, int colSize, int rowSize) { //optimized 
+void debugWorld(char* world, Snake snakeTemp, Apple appTemp, int colSize, int rowSize) { //optimized 
     //"\033[31m" << "X" << "\033[0m" red character 
-  
-    //headType/tailType is unnecessary 
-
-    int headInd = snakeTemp.headX * colSize + snakeTemp.headY;
-    int tailInd = snakeTemp.tailX * colSize + snakeTemp.tailY;
-
-    if(world[headInd] != '#')
-        cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << "\033[31m" << world[headInd] << "\033[0m";
-
-    cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << world[tailInd];
-    cout << "\033[" << snakeTemp.prevX + 2 << ";" << snakeTemp.prevY << "H" << '.';
 
     //debugging
     cout << "\033[" << rowSize + 5 << ";" << 0 << "H" << "Previous Coord: "<<snakeTemp.prevX<<", "<<snakeTemp.prevY<<"  ";
     cout << "\033[" << rowSize + 6 << ";" << 0 << "H" << "Tail Coord: " << snakeTemp.tailX << ", " << snakeTemp.tailY<<"  ";
     cout << "\033[" << rowSize + 7 << ";" << 0 << "H" << "Head Coord: " << snakeTemp.headX << ", " << snakeTemp.headY<<"  ";
 
-
-    if(appTemp.exists || world[appTemp.appX * colSize + appTemp.appY] != '#')
-        cout << "\033[" << appTemp.appX + 2 << ";" << appTemp.appY << "H" << '+';
+    //printing handled by updateWorld() 
 }
 
 void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
@@ -380,8 +367,14 @@ void updateWorld(char* world, Snake& snakeTemp, scroll& direction, Apple*& appTe
     int headInd = snakeTemp.headX * colSize + snakeTemp.headY;
     bool isSnakeBody = world[headInd] == 'L' || world[headInd] == 'R' || world[headInd] == 'U' || world[headInd] == 'D';
 
+    auto printAll = [&]() {
+        cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << headBody;
+        cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << world[snakeTemp.tailX * colSize + snakeTemp.tailY];
+        cout << "\033[" << appTemp->appX + 2 << ";" << appTemp->appY << "H" << '+';
+        };
+
     if (isSnakeBody || world[headInd] == '#') {
-        printWorld(world, snakeTemp, *appTemp, colSize, rowSize);
+        printAll();
         gameover(snakeTemp, rowSize, colSize);
         return;
     }
@@ -389,7 +382,9 @@ void updateWorld(char* world, Snake& snakeTemp, scroll& direction, Apple*& appTe
     //trigerring tail growth 
     bool growSnake = false;
     if (world[headInd] == '+') {
+
         cout << "\033[" << appTemp->appX + 2 << ";" << appTemp->appY << "H" << "\033[31m" << headBody << "\033[0m";
+
         snakeTemp.bodyLength++;
         appTemp->exists = false;
         growSnake = true;
@@ -399,48 +394,38 @@ void updateWorld(char* world, Snake& snakeTemp, scroll& direction, Apple*& appTe
     //world[headInd] = '@';
     world[headInd] = headBody;
 
+    //printing head 
+    cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << world[headInd];
+
     if (!growSnake) {
-        int start = snakeTemp.tailX * colSize + snakeTemp.tailY;
-        int nodeInd = start;
+        int tailInd = snakeTemp.tailX * colSize + snakeTemp.tailY;
 
-        world[nodeInd] = '.';
-        snakeTemp.prevX = nodeInd/colSize;
-        snakeTemp.prevY = nodeInd % colSize;
+        world[tailInd] = '.';
+        snakeTemp.prevX = tailInd/colSize;
+        snakeTemp.prevY = tailInd % colSize;
 
-        //this fuckery will do
-        //trailing tail according to neighbour's presence and head's direction 
+        //clearing trail
+        cout << "\033[" << snakeTemp.prevX + 2 << ";" << snakeTemp.prevY << "H" << '.';
+         
+        if (world[tailInd - 1] == 'L' && tailInd - 1 != headInd) {            tailBody = 'L';
+            tailInd--;        }
+        else if (world[tailInd + colSize] == 'D' && tailInd + colSize != headInd) {            tailBody = 'D';
+            tailInd += colSize;        }
+        else if (world[tailInd + 1] == 'R' && tailInd + 1 != headInd) {            tailBody = 'R';
+            tailInd++;        }
+        else if (world[tailInd - colSize] == 'U' && tailInd - colSize != headInd) {            tailBody = 'U';
+            tailInd -= colSize;        }
 
-        //bad approach; causes game-breaking glitch 
-        if (world[nodeInd - 1] == 'L' && nodeInd - 1 != headInd) {//left
-            tailBody = 'L';
-            nodeInd--;
-            //cout << "going left nodeInd: " << nodeInd << endl;
-        }
-        else if (world[nodeInd + colSize] == 'D' && nodeInd + colSize != headInd) {//down
-            tailBody = 'D';
-            nodeInd += colSize;
-            //cout << "going down nodeInd: " << nodeInd << endl;
-        }
-        else if (world[nodeInd + 1] == 'R' && nodeInd + 1 != headInd) {//right
-            tailBody = 'R';
-            nodeInd++;
-            //cout << "going right nodeInd: " << nodeInd << endl;
-        }
-        else if (world[nodeInd - colSize] == 'U' && nodeInd - colSize != headInd) {//up
-            tailBody = 'U';
-            nodeInd -= colSize;
-            //cout << "going up nodeInd: "<<nodeInd<<endl;
-        }
+        snakeTemp.tailX = tailInd / colSize;
+        snakeTemp.tailY = tailInd % colSize;
 
-        snakeTemp.tailX = nodeInd / colSize;
-        snakeTemp.tailY = nodeInd % colSize;
-        //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
-        //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
+        world[tailInd] = tailBody;
 
-        world[nodeInd] = tailBody;
+        //printing tail 
+        cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << world[tailInd];
+
     }
 }
-
 
 int main() {
     do{
@@ -503,6 +488,9 @@ int main() {
                 } while (world[manzana->appX][manzana->appY] == 'L' || world[manzana->appX][manzana->appY] == 'R' || world[manzana->appX][manzana->appY] == 'U' || world[manzana->appX][manzana->appY] == 'D' || world[manzana->appX][manzana->appY] == '#');
                 manzana->exists = true;
                 world[manzana->appX][manzana->appY] = '+';
+
+                //printing apple 
+                cout << "\033[" << manzana->appX + 2 << ";" << manzana->appY << "H" << '+';
             }
 
             if (_kbhit()) {
@@ -528,13 +516,13 @@ int main() {
 
                 updateWorld(*world, mainSnake, direction, manzana, height, width);
                 //printWorld(*world, width, height);
-                printWorld(*world, mainSnake, *manzana, width, height);
+                debugWorld(*world, mainSnake, *manzana, width, height);
                 continue;
             }
             //auto-scrolling for select direction
             updateWorld(*world, mainSnake, direction, manzana, height, width);
             //printWorld(*world, width, height);
-            printWorld(*world, mainSnake, *manzana, width, height);
+            debugWorld(*world, mainSnake, *manzana, width, height);
         }
     } while (restart);
     return 0;
