@@ -201,9 +201,16 @@ enum class scroll {
 };
 
 struct Snake {
+    char headType = 'R';
+    char tailType = 'R';
     int bodyLength; 
+
+    int prevX; 
+    int prevY; 
+
     int headX; 
     int headY; 
+
     int tailX; 
     int tailY;
     Snake(int bLen, int hX, int hY, int tX, int tY) {
@@ -212,6 +219,9 @@ struct Snake {
         headY = hY; 
         tailX = tX; 
         tailY = tY; 
+        //assuming the snake's initial orientation is pointed rightward 
+        prevX = tailX;
+        prevY = tailY - 1;
     }
 };
 
@@ -251,6 +261,21 @@ void printWorld(char* world, int colSize, int rowSize) {
         cout << world[count];
         count++;
     } 
+}
+
+void printWorld(Snake snakeTemp, Apple appTemp) { //optimized 
+
+    cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << snakeTemp.headType; 
+    cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << snakeTemp.tailType;
+    cout << "\033[" << snakeTemp.prevX + 2 << ";" << snakeTemp.prevY << "H" << '.';
+
+    //debugging
+    //cout << "\033[" << 20 + 5 << ";" << 0 << "H" << " Previous Coord: "<<snakeTemp.prevX<<", "<<snakeTemp.prevY;
+    //cout << "\033[" << 20 + 6 << ";" << 0 << "H" << "Tail Coord: " << snakeTemp.tailX << ", " << snakeTemp.tailY;
+    //cout << "\033[" << 20 + 7 << ";" << 0 << "H" << "Head Coord: " << snakeTemp.headX << ", " << snakeTemp.headY;
+
+    if(appTemp.exists)
+        cout << "\033[" << appTemp.appX + 2 << ";" << appTemp.appY << "H" << '+';
 }
 
 void spawnSnake(char* world, Snake& tempSnake, scroll direction, int colSize) {
@@ -315,147 +340,34 @@ void gameover(Snake& tempSnake, int rowSize, int colSize){
         exit(1);
 }
 
-
-//void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
-//
-//    //renders the snake in the world according to the passed direction 
-//    //essentially draws a directionally-consistent line between the snake's head and tail
-//
-//    switch (direction)
-//    {
-//    case scroll::LEFT:
-//        tempSnake.headY--;
-//        break;
-//    case scroll::RIGHT:
-//        tempSnake.headY++;
-//        break;
-//    case scroll::UP:
-//        tempSnake.headX--;
-//        break;
-//    case scroll::DOWN:
-//        tempSnake.headX++;
-//        break;
-//    default:
-//        break;
-//    }
-//
-//    int headInd = tempSnake.headX * colSize + tempSnake.headY;
-//
-//    if (world[headInd] == '@' || world[headInd] == '#') {
-//        gameover(tempSnake, rowSize, colSize);
-//        return; 
-//    }
-//
-//    //trigerring tail growth 
-//    bool growSnake = false;
-//    if (world[headInd] == '+') {
-//        tempSnake.bodyLength++;
-//        appTemp->exists = false; 
-//        growSnake = true;
-//    }
-//
-//    //converting 2d-index to 1-d index
-//    world[headInd] = '@';
-//
-//    if (!growSnake) {
-//        int start = tempSnake.tailX * colSize + tempSnake.tailY;
-//        int nodeInd = start;
-//
-//        world[nodeInd] = '.';
-//
-//        //this fuckery will do
-//        //trailing tail according to neighbour's presence and head's direction 
-//
-//        //bad approach; causes game-breaking glitch 
-//        if (direction == scroll::RIGHT) {  
-//            if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-//                nodeInd--;
-//                //cout << "going left nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-//                nodeInd += colSize;
-//                //cout << "going down nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-//                nodeInd++;
-//                //cout << "going right nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-//                nodeInd -= colSize;
-//                //cout << "going up nodeInd: "<<nodeInd<<endl;
-//            }
-//        }
-//        else if (direction == scroll::LEFT) { 
-//            if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-//                nodeInd++;
-//                //cout << "going right nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-//                nodeInd -= colSize;
-//                //cout << "going up nodeInd: "<<nodeInd<<endl;
-//            }
-//            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-//                nodeInd--;
-//                //cout << "going left nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-//                nodeInd += colSize;
-//                //cout << "going down nodeInd: " << nodeInd << endl;
-//            }
-//        }
-//        else { 
-//            if (world[nodeInd - colSize] == '@' && nodeInd - colSize != headInd) {//up
-//                nodeInd -= colSize;
-//                //cout << "going up nodeInd: "<<nodeInd<<endl;
-//            }
-//            else if (world[nodeInd + colSize] == '@' && nodeInd + colSize != headInd) {//down
-//                nodeInd += colSize;
-//                //cout << "going down nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd - 1] == '@' && nodeInd - 1 != headInd) {//left
-//                nodeInd--;
-//                //cout << "going left nodeInd: " << nodeInd << endl;
-//            }
-//            else if (world[nodeInd + 1] == '@' && nodeInd + 1 != headInd) {//right
-//                nodeInd++;
-//                //cout << "going right nodeInd: " << nodeInd << endl;
-//            }
-//        }
-//
-//        tempSnake.tailX = nodeInd / colSize;
-//        tempSnake.tailY = nodeInd % colSize;
-//        //cout << "tail: (" << tempSnake.tailX << ", " << tempSnake.tailY << ") " << endl;
-//        //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
-//
-//        world[nodeInd] = '@';
-//    }
-//}
-
-
 void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTemp, const int rowSize, const int colSize) {
 
     //renders the snake in the world according to the passed direction 
     //essentially draws a directionally-consistent line between the snake's head and tail
 
-    char headBody = '@';
-    char tailBody = '@';
+    char headBody = 'R';
+    char tailBody = 'R';
 
     switch (direction)
     {
     case scroll::LEFT:
         headBody = 'L';
+        tempSnake.headType = headBody;
         tempSnake.headY--;
         break;
     case scroll::RIGHT:
         headBody = 'R';
+        tempSnake.headType = headBody;
         tempSnake.headY++;
         break;
     case scroll::UP:
         headBody = 'U';
+        tempSnake.headType = headBody;
         tempSnake.headX--;
         break;
     case scroll::DOWN:
         headBody = 'D';
+        tempSnake.headType = headBody;
         tempSnake.headX++;
         break;
     default:
@@ -487,6 +399,8 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         int nodeInd = start;
 
         world[nodeInd] = '.';
+        tempSnake.prevX = nodeInd/colSize;
+        tempSnake.prevY = nodeInd % colSize;
 
         //this fuckery will do
         //trailing tail according to neighbour's presence and head's direction 
@@ -519,6 +433,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
 
         world[nodeInd] = tailBody;
+        tempSnake.tailType = tailBody;
     }
 }
 
@@ -558,7 +473,8 @@ int main() {
         Apple* manzana = new Apple();
 
         spawnSnake(*world, mainSnake, direction, width);
-        printWorld(*world, width, height);
+        printWorld(*world, width, height); //initial print 
+        //printWorld(mainSnake,*manzana);
 
         int keyPressed_debugIndex = 0;
 
@@ -566,7 +482,7 @@ int main() {
 
         while (!restart) {
             //FPS CONTROL 
-            this_thread::sleep_for(chrono::milliseconds(5));
+            this_thread::sleep_for(chrono::milliseconds(20));
 
             auto now = chrono::system_clock::now();
             chrono::duration<float> elapsedTime = now - prevTime;
@@ -607,12 +523,14 @@ int main() {
                 cout << "\033[" << height + 4 << ";" << 0 << "H" << " SCORE: " << mainSnake.bodyLength;
 
                 updateWorld(*world, mainSnake, direction, manzana, height, width);
-                printWorld(*world, width, height);
+                //printWorld(*world, width, height);
+                printWorld(mainSnake, *manzana);
                 continue;
             }
             //auto-scrolling for select direction
             updateWorld(*world, mainSnake, direction, manzana, height, width);
-            printWorld(*world, width, height);
+            //printWorld(*world, width, height);
+            printWorld(mainSnake, *manzana);
         }
     } while (restart);
     return 0;
