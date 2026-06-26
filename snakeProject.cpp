@@ -201,8 +201,6 @@ enum class scroll {
 };
 
 struct Snake {
-    char headType = 'R';
-    char tailType = 'R';
     int bodyLength; 
 
     int prevX; 
@@ -263,16 +261,25 @@ void printWorld(char* world, int colSize, int rowSize) {
     } 
 }
 
-void printWorld(Snake snakeTemp, Apple appTemp) { //optimized 
+void printWorld(char* world, Snake snakeTemp, Apple appTemp, int colSize, int rowSize) { //optimized 
+    //"\033[31m" << "X" << "\033[0m" red character 
+  
+    //headType/tailType is unnecessary 
 
-    cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << snakeTemp.headType; 
-    cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << snakeTemp.tailType;
+    int headInd = snakeTemp.headX * colSize + snakeTemp.headY;
+    int tailInd = snakeTemp.tailX * colSize + snakeTemp.tailY;
+
+    if(world[headInd] != '#')
+        cout << "\033[" << snakeTemp.headX + 2 << ";" << snakeTemp.headY << "H" << "\033[31m" << world[headInd] << "\033[0m";
+
+    cout << "\033[" << snakeTemp.tailX + 2 << ";" << snakeTemp.tailY << "H" << world[tailInd];
     cout << "\033[" << snakeTemp.prevX + 2 << ";" << snakeTemp.prevY << "H" << '.';
 
     //debugging
-    //cout << "\033[" << 20 + 5 << ";" << 0 << "H" << " Previous Coord: "<<snakeTemp.prevX<<", "<<snakeTemp.prevY;
-    //cout << "\033[" << 20 + 6 << ";" << 0 << "H" << "Tail Coord: " << snakeTemp.tailX << ", " << snakeTemp.tailY;
-    //cout << "\033[" << 20 + 7 << ";" << 0 << "H" << "Head Coord: " << snakeTemp.headX << ", " << snakeTemp.headY;
+    cout << "\033[" << rowSize + 5 << ";" << 0 << "H" << "Previous Coord: "<<snakeTemp.prevX<<", "<<snakeTemp.prevY<<"  ";
+    cout << "\033[" << rowSize + 6 << ";" << 0 << "H" << "Tail Coord: " << snakeTemp.tailX << ", " << snakeTemp.tailY<<"  ";
+    cout << "\033[" << rowSize + 7 << ";" << 0 << "H" << "Head Coord: " << snakeTemp.headX << ", " << snakeTemp.headY<<"  ";
+
 
     if(appTemp.exists)
         cout << "\033[" << appTemp.appX + 2 << ";" << appTemp.appY << "H" << '+';
@@ -352,22 +359,18 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
     {
     case scroll::LEFT:
         headBody = 'L';
-        tempSnake.headType = headBody;
         tempSnake.headY--;
         break;
     case scroll::RIGHT:
         headBody = 'R';
-        tempSnake.headType = headBody;
         tempSnake.headY++;
         break;
     case scroll::UP:
         headBody = 'U';
-        tempSnake.headType = headBody;
         tempSnake.headX--;
         break;
     case scroll::DOWN:
         headBody = 'D';
-        tempSnake.headType = headBody;
         tempSnake.headX++;
         break;
     default:
@@ -378,6 +381,7 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
     bool isSnakeBody = world[headInd] == 'L' || world[headInd] == 'R' || world[headInd] == 'U' || world[headInd] == 'D';
 
     if (isSnakeBody || world[headInd] == '#') {
+        printWorld(world, tempSnake, *appTemp, colSize, rowSize);
         gameover(tempSnake, rowSize, colSize);
         return;
     }
@@ -433,7 +437,6 @@ void updateWorld(char* world, Snake& tempSnake, scroll& direction, Apple*& appTe
         //cout << "head: (" << tempSnake.headX << ", " << tempSnake.headY << ") " << endl;
 
         world[nodeInd] = tailBody;
-        tempSnake.tailType = tailBody;
     }
 }
 
@@ -524,13 +527,13 @@ int main() {
 
                 updateWorld(*world, mainSnake, direction, manzana, height, width);
                 //printWorld(*world, width, height);
-                printWorld(mainSnake, *manzana);
+                printWorld(*world, mainSnake, *manzana, width, height);
                 continue;
             }
             //auto-scrolling for select direction
             updateWorld(*world, mainSnake, direction, manzana, height, width);
             //printWorld(*world, width, height);
-            printWorld(mainSnake, *manzana);
+            printWorld(*world, mainSnake, *manzana, width, height);
         }
     } while (restart);
     return 0;
