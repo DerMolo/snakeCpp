@@ -543,7 +543,7 @@ int main() {
             }
 
             if (_kbhit()) {
-                char userIn = _getch();
+                char userIn = tolower(_getch());
 
                 if (userIn == 'w' && direction != scroll::DOWN)
                     direction = scroll::UP;
