@@ -453,6 +453,7 @@ int main() {
 
     bigPrint("snake", height, width,"\033[33m");
     cout << "\033[10;1H" << "Select a level of difficulty to begin:\n1) EASY\n2) MEDIUM\n3) HARD";
+    cout << "\033[15;1H" << "use keys WASD to move";
     
     char tempIn = ' ';
     bool x = false;
