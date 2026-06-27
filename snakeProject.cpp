@@ -301,7 +301,14 @@ void clearScreen(int rowSize, int colSize) {
     }
 }
 
-void bigPrint(string msg, int rowSize, int colSize) {
+void bigPrint(string msg, int rowSize, int colSize,string color) {
+
+    //color param must be an ANSI escape code: 
+    /* 
+    \033[31m = red 
+    \033[33m = green 
+    https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
+    */
 
     clearScreen(rowSize, colSize);
 
@@ -310,14 +317,14 @@ void bigPrint(string msg, int rowSize, int colSize) {
         //printing each row of bigLetters[msg[i]]
 
         for (int x = 0; x < target.size(); x += 6)
-            cout << "\033[" << (int)x / 6 + 1 << ";" << i * 6 << "H" <<  "\033[31m" << target.substr(x, 5) << "\033[0m";
+            cout << "\033[" << (int)x / 6 + 1 << ";" << i * 6 << "H" << color << target.substr(x, 5) << "\033[0m";
     }
 }
 
 bool restart = false; 
 
 void gameover(Snake& tempSnake, int rowSize, int colSize){
-    bigPrint("gameover", rowSize, colSize);
+    bigPrint("gameover", rowSize, colSize,"\033[31m");
     this_thread::sleep_for(chrono::seconds(1)); 
     cout << "\033[10;0H" << "\t press 'R' to try again ";
     cout << "\033[11;0H" << "\033[33m" << "\t FINAL SCORE: " << tempSnake.bodyLength <<"\033[0m" << endl;
@@ -439,13 +446,44 @@ void updateWorld(char* world, Snake& snakeTemp, scroll& direction, Apple*& appTe
 }
 
 int main() {
+    const int width = 50;
+    const int height = 20;
+
+    int difficulty = 0; 
+
+    bigPrint("snake", height, width,"\033[33m");
+    cout << "\033[10;1H" << "Select a level of difficulty to begin:\n1) EASY\n2) MEDIUM\n3) HARD";
+    
+    char tempIn = ' ';
+    bool x = false;
+    do{
+        if (_kbhit()) {
+            tempIn = _getch();
+            x = tempIn == '1' || tempIn == '2' || tempIn == '3';
+        }
+    }while (!x);
+
+    clearScreen(height, width);
+   
+    switch (tempIn)
+    {
+    case '1':
+        difficulty = 60;
+        break;
+    case '2':
+        difficulty = 45;
+    case '3':
+        difficulty = 20;
+        break;
+    default:
+        break;
+    }
+
     do{
         if (restart) {
             restart = false;
             cout << "\033[0;0H" << string(100, ' ');
         }
-        const int width = 50;
-        const int height = 20;
 
         char world[height][width];
 
@@ -481,7 +519,7 @@ int main() {
 
         while (!restart) {
             //FPS CONTROL 
-            this_thread::sleep_for(chrono::milliseconds(20));
+            this_thread::sleep_for(chrono::milliseconds(difficulty));
 
             auto now = chrono::system_clock::now();
             chrono::duration<float> elapsedTime = now - prevTime;
