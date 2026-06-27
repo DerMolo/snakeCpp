@@ -457,6 +457,7 @@ int main() {
     char tempIn = ' ';
     bool x = false;
     do{
+        //cout << "\033[15;1H" << ":" << tempIn;
         if (_kbhit()) {
             tempIn = _getch();
             x = tempIn == '1' || tempIn == '2' || tempIn == '3';
@@ -472,13 +473,13 @@ int main() {
         break;
     case '2':
         difficulty = 45;
+        break;
     case '3':
         difficulty = 20;
         break;
     default:
         break;
     }
-
     do{
         if (restart) {
             restart = false;
